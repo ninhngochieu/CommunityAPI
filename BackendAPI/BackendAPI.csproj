@@ -33,6 +33,10 @@
     <None Remove="AutoMapper" />
     <None Remove="AutoMapper.Extensions.Microsoft.DependencyInjection" />
     <None Remove="Modules\" />
+    <None Remove="Migrations\JsonSeed\" />
+    <None Remove="Repository\" />
+    <None Remove="Repository\Interface\" />
+    <None Remove="Repository\Implement\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="5.0.12" />
@@ -71,5 +75,9 @@
     <Folder Include="Services\Implement\" />
     <Folder Include="Extentions\" />
     <Folder Include="Modules\" />
+    <Folder Include="Migrations\JsonSeed\" />
+    <Folder Include="Repository\" />
+    <Folder Include="Repository\Interface\" />
+    <Folder Include="Repository\Implement\" />
   </ItemGroup>
 </Project>

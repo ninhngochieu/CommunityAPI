@@ -15,6 +15,7 @@ namespace BackendAPI.Models
         }
 
         public virtual DbSet<AppUser> AppUsers{ get; set; }
+        public virtual DbSet<Photo>  Photos { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

@@ -10,6 +10,9 @@ using System;
 using Microsoft.AspNetCore.Authorization;
 using AutoMapper.QueryableExtensions;
 using AutoMapper;
+using BackendAPI.DTO;
+using BackendAPI.Extentions;
+using BackendAPI.Repository.Interface;
 
 namespace BackendAPI.Controllers
 {
@@ -19,25 +22,34 @@ namespace BackendAPI.Controllers
         private readonly CommunityContext _context;
         private readonly ITokenService _tokenService;
         private readonly IMapper _mapper;
+        private readonly IUserRepository _userRepository;
 
-        public UserController(CommunityContext context, ITokenService tokenService, IMapper mapper)
+        public UserController(CommunityContext context, ITokenService tokenService, IMapper mapper, IUserRepository userRepository)
         {
             _context = context;
             _tokenService = tokenService;
             _mapper = mapper;
+            _userRepository = userRepository;
         }
 
         // GET: api/User
-
+        
         [HttpGet]
         public async Task<ActionResult> GetUsers()
         {
-            UserDTO[] userDTOs = await _context.AppUsers.ProjectTo<UserDTO>(_mapper.ConfigurationProvider).ToArrayAsync();
-            return OkResponse(userDTOs);
+            var users = await _userRepository.GetUsersAsync();
+            return OkResponse(users);
         }
-
-            [HttpPost("Login")]
-        public async Task<ActionResult> DoLogin(LoginDTO loginDTO)
+        
+        [HttpGet("{username}")]
+        public async Task<ActionResult> GetUser(string username)
+        {
+            var user = await _userRepository.GetUsernameAsync(username);
+            return OkResponse(user);
+        }
+        
+        [HttpPost("Login")]
+        public async Task<ActionResult> DoLogin(LoginDto loginDTO)
         {
             AppUser user
                 = await _context.AppUsers.SingleOrDefaultAsync(x => x.UserName == loginDTO.Username);
@@ -52,7 +64,7 @@ namespace BackendAPI.Controllers
                 if (computerHash[i] != user.PasswordHash[i]) return UnauthorizedResponse("Mật khẩu không hợp lệ");
             }
 
-            return OkResponse(new UserDTO
+            return OkResponse(new UserLoginDto
             {
                 Username = user.UserName,
                 Token = _tokenService.CreateToken(user)

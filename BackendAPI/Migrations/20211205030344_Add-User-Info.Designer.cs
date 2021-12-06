@@ -3,14 +3,16 @@ using System;
 using BackendAPI.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace BackendAPI.Migrations
 {
     [DbContext(typeof(CommunityContext))]
-    partial class CommunityContextModelSnapshot : ModelSnapshot
+    [Migration("20211205030344_Add-User-Info")]
+    partial class AddUserInfo
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -40,7 +42,7 @@ namespace BackendAPI.Migrations
                     b.Property<string>("Introduction")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("KnownAs")
+                    b.Property<string>("KnowAs")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("LastActive")
@@ -69,7 +71,7 @@ namespace BackendAPI.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("AppUserId")
+                    b.Property<int?>("AppUserId")
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsMain")
@@ -90,13 +92,9 @@ namespace BackendAPI.Migrations
 
             modelBuilder.Entity("BackendAPI.Models.Photo", b =>
                 {
-                    b.HasOne("BackendAPI.Models.AppUser", "AppUser")
+                    b.HasOne("BackendAPI.Models.AppUser", null)
                         .WithMany("Photos")
-                        .HasForeignKey("AppUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("AppUser");
+                        .HasForeignKey("AppUserId");
                 });
 
             modelBuilder.Entity("BackendAPI.Models.AppUser", b =>

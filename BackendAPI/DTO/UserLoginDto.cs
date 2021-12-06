@@ -1,6 +1,6 @@
-﻿namespace BackendAPI.Controllers
+﻿namespace BackendAPI.DTO
 {
-    internal class UserDTO
+    public class UserLoginDto
     {
 
         public string Username { get;  set; }

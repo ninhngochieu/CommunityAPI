@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using BackendAPI.Extentions;
 using BackendAPI.Models;
+using BackendAPI.Modules;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;

@@ -3,14 +3,16 @@ using System;
 using BackendAPI.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace BackendAPI.Migrations
 {
     [DbContext(typeof(CommunityContext))]
-    partial class CommunityContextModelSnapshot : ModelSnapshot
+    [Migration("20211205060757_Update-User-Properties")]
+    partial class UpdateUserProperties
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

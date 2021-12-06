@@ -1,13 +1,13 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace BackendAPI.Controllers
+namespace BackendAPI.DTO
 {
-    public class LoginDTO
+    public class LoginDto
     {
 
-        [Required]
+        [Required(ErrorMessage ="Tên của username không hợp lệ")]
         public string Username { get;  set; }
-        [Required]
+        [Required(ErrorMessage ="Mật khẩu không hợp lệ")]
         public string Password { get; set; }
     }
 }

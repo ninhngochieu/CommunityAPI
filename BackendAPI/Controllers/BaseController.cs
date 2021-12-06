@@ -8,10 +8,6 @@ namespace BackendAPI.Controllers
     [ApiController]
     public class BaseController: ControllerBase
     {
-        public BaseController()
-        {
-        }
-
         protected ActionResult OkResponse(object result)
         {
             return Ok(new

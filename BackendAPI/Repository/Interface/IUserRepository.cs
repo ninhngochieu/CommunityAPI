@@ -8,6 +8,10 @@ namespace BackendAPI.Repository.Interface
     public interface IUserRepository
     {
         Task<MemberDto[]> GetUsersAsync();
-        Task<MemberDto> GetUsernameAsync(string username);
+        Task<MemberDto> GetUserDtoAsync(string username);
+
+        Task<bool> SaveAllAsync();
+        Task<AppUser> GetUserAsync(string username);
+        void UpdateUser(AppUser user);
     }
 }

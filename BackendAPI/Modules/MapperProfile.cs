@@ -15,6 +15,7 @@ namespace BackendAPI.Modules
                     o => 
                         o.MapFrom(p=>p.Photos.FirstOrDefault(x=>x.IsMain).Url));
             CreateMap<Photo, PhotoDto>();
+            CreateMap<MemberUpdateDto, AppUser>();
         }
     }
 }

@@ -7,6 +7,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Web.Http.Description;
 using System;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using AutoMapper.QueryableExtensions;
 using AutoMapper;
@@ -44,7 +45,11 @@ namespace BackendAPI.Controllers
         [HttpGet("{username}")]
         public async Task<ActionResult> GetUser(string username)
         {
-            var user = await _userRepository.GetUsernameAsync(username);
+            var user = await _userRepository.GetUserDtoAsync(username);
+            if (user is null)
+            {
+                return NotFoundResponse("Không tìm thấy user này");
+            }
             return OkResponse(user);
         }
         
@@ -95,6 +100,24 @@ namespace BackendAPI.Controllers
         private async Task<bool> UserExists(string username)
         {
             return await _context.AppUsers.AnyAsync(u => u.UserName == username.ToLower());
+        }
+
+        [HttpPut]
+        public async Task<ActionResult> UpdateUser(MemberUpdateDto memberUpdateDto)
+        {
+            var username = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var user = await _userRepository.GetUserAsync(username);
+            
+            _mapper.Map(memberUpdateDto, user);
+
+            _userRepository.UpdateUser(user);
+            
+            if (await _userRepository.SaveAllAsync())
+            {
+                return OkResponse(_mapper.Map<MemberDto>(user));
+            }
+
+            return BadRequestResponse("Xảy ra lỗi khi update");
         }
     }
 }

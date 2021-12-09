@@ -75,23 +75,32 @@ namespace BackendAPI.Controllers
         }// POST: api/User
             // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost("Register")]
-        public async Task<ActionResult> PostAppUser(RegisterDTO register)
+        public async Task<ActionResult> PostAppUser(RegisterDto register)
         {
+
             if(await UserExists(register.Username))
             {
                 return BadRequestResponse("Username đã tồn tại");
             }
 
+            var user = _mapper.Map<AppUser>(register);
+            
             using var hmac = new HMACSHA512();
-            var user = new AppUser
-            {
-                UserName = register.Username,
-                PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(register.Password)),
-                PasswordSalt = hmac.Key
-            };
+
+            user.UserName = register.Username;
+            user.PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(register.Password));
+            user.PasswordSalt = hmac.Key;
+            
             _context.Add(user);
+            
             await _context.SaveChangesAsync();
-            return OkResponse(user);
+            
+            return OkResponse(new UserLoginDto()
+            {
+                Username = user.UserName,
+                Token = _tokenService.CreateToken(user),
+                PhotoUrl = "",
+            });
         }
 
         private async Task<bool> UserExists(string username)
@@ -172,6 +181,43 @@ namespace BackendAPI.Controllers
             if (await _userRepository.SaveAllAsync()) return OkResponse("Đặt ảnh mặc định thành công");
 
             return BadRequestResponse("Có lỗi khi đặt ảnh mặc định");
+        }
+
+        [HttpDelete("Delete-Photo/{photoId}")]
+        public async Task<ActionResult> DeletePhoto(int photoId)
+        {
+            var user = await _userRepository.GetUserAsync(User.GetUserName());
+
+            var photo =  user.Photos.FirstOrDefault(x => x.Id == photoId);
+
+            if (photo is null)
+            {
+                return NotFoundResponse("Không tìm thấy ảnh");
+            }
+
+            if (photo.IsMain)
+            {
+                return BadRequestResponse("Bạn không thể xoá ảnh chính");
+            }
+
+            if (photo.PublicId != null)
+            {
+                var result = await _photoService.DeletePhotoAsync(photo.PublicId);
+
+                if (result.Error is not null)
+                {
+                    return BadRequestResponse(result.Error.Message);
+                }
+            }
+
+            user.Photos.Remove(photo);
+
+            if (await _userRepository.SaveAllAsync())
+            {
+                return OkResponse("Xoá ảnh thành công");
+            }
+
+            return BadRequestResponse("Xoá ảnh thất bại. Có lỗi xảy ra");
         }
     }
 }

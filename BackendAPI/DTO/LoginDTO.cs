@@ -9,5 +9,6 @@ namespace BackendAPI.DTO
         public string Username { get;  set; }
         [Required(ErrorMessage ="Mật khẩu không hợp lệ")]
         public string Password { get; set; }
+        
     }
 }

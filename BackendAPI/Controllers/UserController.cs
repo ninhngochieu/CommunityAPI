@@ -1,19 +1,18 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using BackendAPI.Models;
+using System;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using System.Web.Http.Description;
-using System;
-using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
-using AutoMapper.QueryableExtensions;
+using System.Threading.Tasks;
 using AutoMapper;
 using BackendAPI.DTO;
 using BackendAPI.Extentions;
+using BackendAPI.Models;
 using BackendAPI.Repository.Interface;
+using BackendAPI.Services.Interface;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace BackendAPI.Controllers
 {
@@ -24,13 +23,15 @@ namespace BackendAPI.Controllers
         private readonly ITokenService _tokenService;
         private readonly IMapper _mapper;
         private readonly IUserRepository _userRepository;
+        private readonly IPhotoService _photoService;
 
-        public UserController(CommunityContext context, ITokenService tokenService, IMapper mapper, IUserRepository userRepository)
+        public UserController(CommunityContext context, ITokenService tokenService, IMapper mapper, IUserRepository userRepository, IPhotoService photoService)
         {
             _context = context;
             _tokenService = tokenService;
             _mapper = mapper;
             _userRepository = userRepository;
+            _photoService = photoService;
         }
 
         // GET: api/User
@@ -42,37 +43,33 @@ namespace BackendAPI.Controllers
             return OkResponse(users);
         }
         
-        [HttpGet("{username}")]
+        [HttpGet("{username}", Name = "GetUser")]
         public async Task<ActionResult> GetUser(string username)
         {
             var user = await _userRepository.GetUserDtoAsync(username);
-            if (user is null)
-            {
-                return NotFoundResponse("Không tìm thấy user này");
-            }
-            return OkResponse(user);
+            return user is null ? NotFoundResponse("Không tìm thấy user này") : OkResponse(user);
         }
         
         [HttpPost("Login")]
         public async Task<ActionResult> DoLogin(LoginDto loginDTO)
         {
             AppUser user
-                = await _context.AppUsers.SingleOrDefaultAsync(x => x.UserName == loginDTO.Username);
+                = await _context.AppUsers.Include(p=>p.Photos).SingleOrDefaultAsync(x => x.UserName == loginDTO.Username);
             if (user is null) return UnauthorizedResponse("Tai khoan khong hop le");
 
             using var hmac = new HMACSHA512(user.PasswordSalt);
 
-            byte[] computerHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(loginDTO.Password));
+            var computerHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(loginDTO.Password));
 
-            for (int i = 0; i < computerHash.Length; i++)
+            if (computerHash.Where((item, index) => item != user.PasswordHash[index]).Any())
             {
-                if (computerHash[i] != user.PasswordHash[i]) return UnauthorizedResponse("Mật khẩu không hợp lệ");
+                return UnauthorizedResponse("Mật khẩu không hợp lệ");
             }
-
             return OkResponse(new UserLoginDto
             {
                 Username = user.UserName,
-                Token = _tokenService.CreateToken(user)
+                Token = _tokenService.CreateToken(user),
+                PhotoUrl = user.Photos.FirstOrDefault(x=>x.IsMain)?.Url
             });
 
         }// POST: api/User
@@ -86,7 +83,7 @@ namespace BackendAPI.Controllers
             }
 
             using var hmac = new HMACSHA512();
-            AppUser user = new AppUser
+            var user = new AppUser
             {
                 UserName = register.Username,
                 PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(register.Password)),
@@ -105,7 +102,7 @@ namespace BackendAPI.Controllers
         [HttpPut]
         public async Task<ActionResult> UpdateUser(MemberUpdateDto memberUpdateDto)
         {
-            var username = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var username = User.GetUserName();
             var user = await _userRepository.GetUserAsync(username);
             
             _mapper.Map(memberUpdateDto, user);
@@ -118,6 +115,63 @@ namespace BackendAPI.Controllers
             }
 
             return BadRequestResponse("Xảy ra lỗi khi update");
+        }
+
+        [Authorize]
+        [HttpPost("Add-Photos")]
+        public async Task<ActionResult<PhotoDto>> AddPhoto(IFormFile file)
+        {
+            var user = await _userRepository.GetUserAsync(User.GetUserName());
+            var result = await _photoService.AddPhotoAsync(file);
+            if (result.Error != null) return BadRequestResponse(result.Error.Message);
+            var photo = new Photo
+            {
+                Url = result.SecureUrl.AbsoluteUri,
+                PublicId = result.PublicId
+            };
+            if (user.Photos.Count == 0)
+            {
+                photo.IsMain = true;
+            }
+            user.Photos.Add(photo);
+
+            if (await _userRepository.SaveAllAsync())
+            {
+                // return OkResponse(_mapper.Map<PhotoDto>(photo));
+                return CreatedAtRoute("GetUser", new {username = user.UserName},_mapper.Map<PhotoDto>(photo));
+            }
+            
+            return BadRequestResponse("Có lỗi khi thêm ảnh");
+        }
+
+        [HttpPut("Set-Main-Photo/{photoId}")]
+        public async Task<ActionResult> SetMainPhoto(int photoId)
+        {
+            var user = await _userRepository.GetUserAsync(User.GetUserName());
+            var photo = user.Photos.FirstOrDefault(x=>x.Id == photoId);
+
+            if (photo is null)
+            {
+                return NotFoundResponse("Không tìm thấy ảnh");
+            }
+
+            if (photo.IsMain)
+            {
+                return BadRequestResponse("Ảnh đã là ảnh mặc định");
+            }
+
+            var currentPhotoMain = user.Photos.FirstOrDefault(x => x.IsMain);
+
+            if (currentPhotoMain is not null)
+            {
+                currentPhotoMain.IsMain = false;
+            }
+
+            photo.IsMain = true;
+
+            if (await _userRepository.SaveAllAsync()) return OkResponse("Đặt ảnh mặc định thành công");
+
+            return BadRequestResponse("Có lỗi khi đặt ảnh mặc định");
         }
     }
 }

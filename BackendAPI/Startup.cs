@@ -40,7 +40,7 @@ namespace BackendAPI
             });
             services.AddControllers();
             services.AddSwaggerExtensions();
-            services.AddServicesExtensions();
+            services.AddServicesExtensions(_configuration);
 
             services.AddCors();
             services.AddAuthExtensions(_configuration);

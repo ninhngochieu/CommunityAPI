@@ -39,6 +39,7 @@
     <None Remove="Repository\Implement\" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="CloudinaryDotNet" Version="1.11.0" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="5.0.12" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Proxies" Version="5.0.12" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="5.0.12" />

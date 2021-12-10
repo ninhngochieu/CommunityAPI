@@ -7,6 +7,7 @@ using AutoMapper;
 using BackendAPI.DTO;
 using BackendAPI.Extentions;
 using BackendAPI.Models;
+using BackendAPI.Modules;
 using BackendAPI.Repository.Interface;
 using BackendAPI.Services.Interface;
 using Microsoft.AspNetCore.Authorization;
@@ -37,15 +38,27 @@ namespace BackendAPI.Controllers
         // GET: api/User
         
         [HttpGet]
-        public async Task<ActionResult> GetUsers()
+        public async Task<ActionResult> GetUsers([FromQuery]UserParams @params)
         {
-            var users = await _userRepository.GetUsersAsync();
+            var user = await _userRepository.GetUserAsync(User.GetUserName());
+
+            @params.CurrentUsername = user.UserName;
+
+            if (string.IsNullOrEmpty(@params.Gender))
+            {
+            }
+            
+            var users = await _userRepository.GetUsersAsync(@params);
+         
+            Response.AddPaginationHeader(users.CurrentPage, users.PageSize, users.TotalCount, users.TotalPages);
+            
             return OkResponse(users);
         }
         
         [HttpGet("{username}", Name = "GetUser")]
         public async Task<ActionResult> GetUser(string username)
         {
+            
             var user = await _userRepository.GetUserDtoAsync(username);
             return user is null ? NotFoundResponse("Không tìm thấy user này") : OkResponse(user);
         }

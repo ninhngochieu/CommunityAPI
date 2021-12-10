@@ -2,12 +2,13 @@
 using BackendAPI.Controllers;
 using BackendAPI.DTO;
 using BackendAPI.Models;
+using BackendAPI.Modules;
 
 namespace BackendAPI.Repository.Interface
 {
     public interface IUserRepository
     {
-        Task<MemberDto[]> GetUsersAsync();
+        Task<PagedList<MemberDto>> GetUsersAsync(UserParams @params);
         Task<MemberDto> GetUserDtoAsync(string username);
 
         Task<bool> SaveAllAsync();

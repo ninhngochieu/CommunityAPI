@@ -4,6 +4,7 @@ using AutoMapper.QueryableExtensions;
 using BackendAPI.Controllers;
 using BackendAPI.DTO;
 using BackendAPI.Models;
+using BackendAPI.Modules;
 using BackendAPI.Repository.Interface;
 using Microsoft.EntityFrameworkCore;
 using SQLitePCL;
@@ -21,9 +22,10 @@ namespace BackendAPI.Repository.Implement
             _mapper = mapper;
         }
 
-        public Task<MemberDto[]> GetUsersAsync()
+        public async Task<PagedList<MemberDto>> GetUsersAsync(UserParams @params)
         {
-            return _context.AppUsers.ProjectTo<MemberDto>(_mapper.ConfigurationProvider).ToArrayAsync();
+            var queryable = _context.AppUsers.ProjectTo<MemberDto>(_mapper.ConfigurationProvider).AsNoTracking();
+            return await PagedList<MemberDto>.CreateAsync(queryable, @params.PageNumber, @params.PageSize);
         }
 
         public async Task<MemberDto> GetUserDtoAsync(string username)

@@ -42,6 +42,11 @@ namespace BackendAPI.Controllers
         {
             var user = await _userRepository.GetUserAsync(User.GetUserName());
 
+            if (user is null)
+            {
+                return UnauthorizedResponse("Bạn phải đăng nhập để xem nội dung này");
+            }
+            
             @params.CurrentUsername = user.UserName;
 
             if (string.IsNullOrEmpty(@params.Gender))

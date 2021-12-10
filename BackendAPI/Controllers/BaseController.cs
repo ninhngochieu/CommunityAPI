@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Net;
-using BackendAPI.Modules;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BackendAPI.Controllers
 {
-    [ServiceFilter(typeof(LogUserActivity))]
     [Route("api/[controller]")]
     [ApiController]
     public class BaseController: ControllerBase

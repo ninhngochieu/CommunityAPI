@@ -21,7 +21,6 @@ namespace BackendAPI.Extentions
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IPhotoService, PhotoService>();
             services.AddScoped<IUserRepository, UserRepository>();
-            services.AddScoped<LogUserActivity>();
             return services;
         }
     }

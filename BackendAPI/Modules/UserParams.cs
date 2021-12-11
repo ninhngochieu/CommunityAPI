@@ -11,12 +11,10 @@ namespace BackendAPI.Modules
             get => _pageSize;
             set => _pageSize = value > _maxPageSize ? _maxPageSize : value;
         }
-
         internal string CurrentUsername { get; set; }
         public string Gender { get; set; }
-        
         public int MinAge { get; set; }
-
         public int MaxAge { get; set; }
+        public string OrderBy { get; set; } = "lastActive";
     }
 }

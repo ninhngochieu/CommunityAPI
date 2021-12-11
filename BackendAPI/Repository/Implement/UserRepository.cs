@@ -31,11 +31,19 @@ namespace BackendAPI.Repository.Implement
 
             queryable = queryable.Where(u => u.UserName != @params.CurrentUsername);
 
-            if (@params.Gender.ToLower() != "undefined")
+
+            if (!string.IsNullOrEmpty(@params.Gender))
             {
-                if (!string.IsNullOrEmpty(@params.Gender)) queryable = queryable.Where(u => u.Gender == @params.Gender);
+                switch (@params.Gender.ToLower())
+                {
+                    case "all": break;
+                    case "undefined": break;
+                    case "male" or "female":                 
+                        queryable = queryable.Where(u => u.Gender == @params.Gender);
+                        break;
+                }
             }
-            
+
             if (@params.MinAge > @params.MaxAge) //Tối ưu hoá để không query nếu năm không hợp lệ
             {
                 return await PagedList<MemberDto>.CreateNullListAsync();
@@ -53,6 +61,12 @@ namespace BackendAPI.Repository.Implement
                 queryable = queryable.Where(u=>u.DateOfBirth <= maxDate);    
             }
 
+            queryable = @params.OrderBy switch
+            {
+                "created" => queryable.OrderByDescending(x => x.Created),
+                _ => queryable.OrderByDescending(x => x.LastActive)
+            };
+            
             return await PagedList<MemberDto>.CreateAsync(queryable
                 .ProjectTo<MemberDto>(_mapper.ConfigurationProvider)
                 .AsNoTracking(), @params.PageNumber, @params.PageSize);

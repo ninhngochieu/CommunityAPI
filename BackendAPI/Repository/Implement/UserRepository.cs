@@ -27,11 +27,11 @@ namespace BackendAPI.Repository.Implement
 
         public async Task<PagedList<MemberDto>> GetUsersAsync(UserParams @params)
         {
-            var queryable = _context.AppUsers.Include(p=>p.Photos).AsQueryable();
+            var queryable = _context.AppUsers.AsQueryable();
 
             queryable = queryable.Where(u => u.UserName != @params.CurrentUsername);
 
-            queryable = queryable.Where(u => u.Gender == @params.Gender);
+            if(!string.IsNullOrEmpty(@params.Gender)) queryable = queryable.Where(u => u.Gender == @params.Gender);
 
             if (@params.MinAge > @params.MaxAge) //Tối ưu hoá để không query nếu năm không hợp lệ
             {
@@ -43,7 +43,7 @@ namespace BackendAPI.Repository.Implement
                 var minDate = DateTime.Today.AddYears(-@params.MaxAge - 1); // Tìm tuổi qua ddmmyyyy cho nhanh
                 queryable = queryable.Where(u => u.DateOfBirth >= minDate);   
             }
-
+            
             if (@params.MinAge>0)
             {
                 var maxDate = DateTime.Today.AddYears(-@params.MinAge);

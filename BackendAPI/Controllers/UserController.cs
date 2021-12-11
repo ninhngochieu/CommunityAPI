@@ -49,11 +49,6 @@ namespace BackendAPI.Controllers
             }
             //Tận dụng @param để đẩy xuống // internal get set
             @params.CurrentUsername = user.UserName;
-
-            if (string.IsNullOrEmpty(@params.Gender))
-            {
-                @params.Gender = user.Gender == "male" ? "male" : "female";
-            }
             
             var users = await _userRepository.GetUsersAsync(@params);
          

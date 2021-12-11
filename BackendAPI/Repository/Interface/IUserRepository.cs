@@ -14,5 +14,6 @@ namespace BackendAPI.Repository.Interface
         Task<bool> SaveAllAsync();
         Task<AppUser> GetUserAsync(string username);
         void UpdateUser(AppUser user);
+        Task<AppUser> GetUserByIdAsync(int userId);
     }
 }

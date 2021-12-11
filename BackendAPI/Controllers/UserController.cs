@@ -41,11 +41,18 @@ namespace BackendAPI.Controllers
         public async Task<ActionResult> GetUsers([FromQuery]UserParams @params)
         {
             var user = await _userRepository.GetUserAsync(User.GetUserName());
+            //Mục đích là để loại trừ người đang lọc
 
+            if (user is null)
+            {
+                return UnauthorizedResponse("Không được phép truy cập tài nguyên này");
+            }
+            //Tận dụng @param để đẩy xuống // internal get set
             @params.CurrentUsername = user.UserName;
 
             if (string.IsNullOrEmpty(@params.Gender))
             {
+                @params.Gender = user.Gender == "male" ? "male" : "female";
             }
             
             var users = await _userRepository.GetUsersAsync(@params);

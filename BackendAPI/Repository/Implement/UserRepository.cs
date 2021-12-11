@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Linq;
+using System.Threading.Tasks;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using BackendAPI.Controllers;
@@ -24,16 +25,22 @@ namespace BackendAPI.Repository.Implement
 
         public async Task<PagedList<MemberDto>> GetUsersAsync(UserParams @params)
         {
-            var queryable = _context.AppUsers.ProjectTo<MemberDto>(_mapper.ConfigurationProvider).AsNoTracking();
-            return await PagedList<MemberDto>.CreateAsync(queryable, @params.PageNumber, @params.PageSize);
+            var queryable = _context.AppUsers.Include(p=>p.Photos).AsQueryable();
+
+            queryable = queryable.Where(u => u.UserName != @params.CurrentUsername);
+
+            queryable = queryable.Where(u => u.Gender == @params.Gender);
+            
+            
+            return await PagedList<MemberDto>.CreateAsync(queryable
+                .ProjectTo<MemberDto>(_mapper.ConfigurationProvider)
+                .AsNoTracking(), @params.PageNumber, @params.PageSize);
         }
 
         public async Task<MemberDto> GetUserDtoAsync(string username)
         {
             return  _mapper.Map<MemberDto>( await GetUserAsync(username));
         }
-        
-
         public async Task<bool> SaveAllAsync()
         {
             return await _context.SaveChangesAsync() != 0;
@@ -47,6 +54,11 @@ namespace BackendAPI.Repository.Implement
         public void UpdateUser(AppUser user)
         {
             _context.Entry(user).State = EntityState.Modified;
+        }
+
+        public async Task<AppUser> GetUserByIdAsync(int userId)
+        {
+            return await _context.AppUsers.FindAsync(userId);
         }
     }
 }

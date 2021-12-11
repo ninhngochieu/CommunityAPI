@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
@@ -30,8 +32,24 @@ namespace BackendAPI.Repository.Implement
             queryable = queryable.Where(u => u.UserName != @params.CurrentUsername);
 
             queryable = queryable.Where(u => u.Gender == @params.Gender);
-            
-            
+
+            if (@params.MinAge > @params.MaxAge) //Tối ưu hoá để không query nếu năm không hợp lệ
+            {
+                return await PagedList<MemberDto>.CreateNullListAsync();
+            }
+
+            if (@params.MaxAge>0) // Kiểm tra điều kiện mới cho tính năm
+            {
+                var minDate = DateTime.Today.AddYears(-@params.MaxAge - 1); // Tìm tuổi qua ddmmyyyy cho nhanh
+                queryable = queryable.Where(u => u.DateOfBirth >= minDate);   
+            }
+
+            if (@params.MinAge>0)
+            {
+                var maxDate = DateTime.Today.AddYears(-@params.MinAge);
+                queryable = queryable.Where(u=>u.DateOfBirth <= maxDate);    
+            }
+
             return await PagedList<MemberDto>.CreateAsync(queryable
                 .ProjectTo<MemberDto>(_mapper.ConfigurationProvider)
                 .AsNoTracking(), @params.PageNumber, @params.PageSize);

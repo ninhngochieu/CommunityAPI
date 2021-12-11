@@ -11,7 +11,7 @@ namespace BackendAPI.Modules
         public PagedList(IEnumerable<T> items, int count, int pageNumber,int pageSize)
         {
             CurrentPage = pageNumber;
-            TotalPages = (int) Math.Ceiling(count /(double)  pageSize); // làm tròn xuống rồi chia tổng item
+            TotalPages = pageSize != 0 ? (int) Math.Ceiling(count /(double)  pageSize) : pageSize; // làm tròn xuống rồi chia tổng item
             PageSize = pageSize;
             TotalCount = count;
             AddRange(items);
@@ -24,6 +24,11 @@ namespace BackendAPI.Modules
             return new PagedList<T>(items, count, pageNumber, pageSize);
         }
 
+        public static async Task<PagedList<T>> CreateNullListAsync() 
+        {
+            return new PagedList<T>(new List<T>(), 0, 0, 0);
+        }
+        
         public int CurrentPage { get; set; }
         public int TotalPages { get; set; }
         public int PageSize { get; set; }

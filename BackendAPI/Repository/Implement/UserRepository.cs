@@ -31,8 +31,11 @@ namespace BackendAPI.Repository.Implement
 
             queryable = queryable.Where(u => u.UserName != @params.CurrentUsername);
 
-            if(!string.IsNullOrEmpty(@params.Gender)) queryable = queryable.Where(u => u.Gender == @params.Gender);
-
+            if (@params.Gender.ToLower() != "undefined")
+            {
+                if (!string.IsNullOrEmpty(@params.Gender)) queryable = queryable.Where(u => u.Gender == @params.Gender);
+            }
+            
             if (@params.MinAge > @params.MaxAge) //Tối ưu hoá để không query nếu năm không hợp lệ
             {
                 return await PagedList<MemberDto>.CreateNullListAsync();

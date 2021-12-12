@@ -6,7 +6,7 @@ using BackendAPI.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
-namespace BackendAPI
+namespace BackendAPI.Services.Implement
 {
     internal class TokenService : ITokenService
     {
@@ -21,24 +21,24 @@ namespace BackendAPI
 
         public string CreateToken(AppUser user)
         {
-            List<Claim> claims = new List<Claim>
+            var claims = new List<Claim>
             {
                 new(JwtRegisteredClaimNames.NameId, user.Id.ToString()),
                 new(JwtRegisteredClaimNames.UniqueName, user.UserName)
             };
 
-            SigningCredentials credentials = new SigningCredentials(_key, SecurityAlgorithms.HmacSha256Signature);
+            var credentials = new SigningCredentials(_key, SecurityAlgorithms.HmacSha256Signature);
 
-            SecurityTokenDescriptor descriptor = new SecurityTokenDescriptor
+            var descriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
                 Expires = System.DateTime.Now.AddDays(int.Parse(_configuration["Token:ExpiresDay"])),
                 SigningCredentials = credentials
             };
 
-            JwtSecurityTokenHandler handler = new JwtSecurityTokenHandler();
+            var handler = new JwtSecurityTokenHandler();
 
-            SecurityToken token = handler.CreateToken(descriptor);
+            var token = handler.CreateToken(descriptor);
 
             return handler.WriteToken(token);
         }

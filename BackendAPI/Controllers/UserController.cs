@@ -38,15 +38,16 @@ namespace BackendAPI.Controllers
         // GET: api/User
         
         [HttpGet]
+        [Authorize]
         public async Task<ActionResult> GetUsers([FromQuery]UserParams @params)
         {
             var user = await _userRepository.GetUserAsync(User.GetUserName());
             //Mục đích là để loại trừ người đang lọc
 
-            if (user is null)
-            {
-                return UnauthorizedResponse("Không được phép truy cập tài nguyên này");
-            }
+            // if (user is null)
+            // {
+            //     return UnauthorizedResponse("Không được phép truy cập tài nguyên này");
+            // }
             //Tận dụng @param để đẩy xuống // internal get set
             @params.CurrentUsername = user.UserName;
             
@@ -60,7 +61,6 @@ namespace BackendAPI.Controllers
         [HttpGet("{username}", Name = "GetUser")]
         public async Task<ActionResult> GetUser(string username)
         {
-            
             var user = await _userRepository.GetUserDtoAsync(username);
             return user is null ? NotFoundResponse("Không tìm thấy user này") : OkResponse(user);
         }

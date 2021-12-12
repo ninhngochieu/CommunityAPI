@@ -22,6 +22,9 @@ namespace BackendAPI.Models
         public string Gender { get; set; }
         public IList<Photo> Photos { get; set; }
 
+        public IList<UserLike> LikeByUsers { get; set; }
+
+        public IList<UserLike> LikedUsers { get; set; }
         public int GetAge()
         {
             return DateOfBirth.CalculateAge();

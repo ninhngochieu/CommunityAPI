@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -8,8 +9,8 @@ namespace BackendAPI.Repository.Interface
 {
     public interface ILikeRepository
     {
-        Task<UserLike> GetUserLike(int sourceUserId, int likeUserId);
-        Task<AppUser> GetUserWithLikes(int userId);
-        Task<IEnumerable<LikeDto>> GetUserLikes(string predicate, int userId);
+        Task<UserLike> GetUserLike(Guid sourceUserId, Guid likeUserId);
+        Task<AppUser> GetUserWithLikes(Guid userId);
+        Task<IEnumerable<LikeDto>> GetUserLikes(string predicate, Guid userId);
     }
 }

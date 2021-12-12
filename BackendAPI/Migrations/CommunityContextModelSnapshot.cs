@@ -18,9 +18,9 @@ namespace BackendAPI.Migrations
 
             modelBuilder.Entity("BackendAPI.Models.AppUser", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("City")
                         .HasColumnType("TEXT");
@@ -75,6 +75,9 @@ namespace BackendAPI.Migrations
                     b.Property<int>("AppUserId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<Guid?>("AppUserId1")
+                        .HasColumnType("TEXT");
+
                     b.Property<bool>("IsMain")
                         .HasColumnType("INTEGER");
 
@@ -86,18 +89,18 @@ namespace BackendAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AppUserId");
+                    b.HasIndex("AppUserId1");
 
                     b.ToTable("Photos");
                 });
 
             modelBuilder.Entity("BackendAPI.Models.UserLike", b =>
                 {
-                    b.Property<int>("LikedUserId")
-                        .HasColumnType("INTEGER");
+                    b.Property<Guid>("LikedUserId")
+                        .HasColumnType("TEXT");
 
-                    b.Property<int>("SourceUserId")
-                        .HasColumnType("INTEGER");
+                    b.Property<Guid>("SourceUserId")
+                        .HasColumnType("TEXT");
 
                     b.HasKey("LikedUserId", "SourceUserId");
 
@@ -110,9 +113,7 @@ namespace BackendAPI.Migrations
                 {
                     b.HasOne("BackendAPI.Models.AppUser", "AppUser")
                         .WithMany("Photos")
-                        .HasForeignKey("AppUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("AppUserId1");
 
                     b.Navigation("AppUser");
                 });

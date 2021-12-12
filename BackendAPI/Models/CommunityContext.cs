@@ -39,7 +39,6 @@ namespace BackendAPI.Models
                 .WithMany(s => s.LikeByUsers)
                 .HasForeignKey(l => l.LikedUserId)
                 .OnDelete(DeleteBehavior.Cascade);
-            
         }
     }
 }

@@ -91,7 +91,7 @@ namespace BackendAPI.Repository.Implement
             _context.Entry(user).State = EntityState.Modified;
         }
 
-        public async Task<AppUser> GetUserByIdAsync(int userId)
+        public async Task<AppUser> GetUserByIdAsync(Guid userId)
         {
             return await _context.AppUsers.FindAsync(userId);
         }

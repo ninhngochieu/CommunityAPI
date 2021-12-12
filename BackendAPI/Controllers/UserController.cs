@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -117,6 +116,8 @@ namespace BackendAPI.Controllers
                 Username = user.UserName,
                 Token = _tokenService.CreateToken(user),
                 PhotoUrl = "",
+                Gender =user.Gender,
+                KnownAs = user.KnownAs
             });
         }
 

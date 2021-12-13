@@ -58,7 +58,7 @@ namespace BackendAPI.Repository.Implement
                 Id = u.Id
             });
 
-            return await PagedList<LikeDto>.CreateAsync(likeUsers, likeParams.PageNumber, likeParams.PageSize);
+            return await PagedList<LikeDto>.CreateAsync(likeUsers.AsNoTracking(), likeParams.PageNumber, likeParams.PageSize);
         }
     }
 }

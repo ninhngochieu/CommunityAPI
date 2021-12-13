@@ -17,6 +17,10 @@ namespace BackendAPI.Modules
             CreateMap<Photo, PhotoDto>();
             CreateMap<MemberUpdateDto, AppUser>();
             CreateMap<RegisterDto, AppUser>();
+            CreateMap<Message, MessageDto>()
+                .ForMember(d=>d.SenderPhotoUrl, o=>o.MapFrom(s=>s.SenderUser.Photos.FirstOrDefault(x=>x.IsMain).Url))
+                .ForMember(d=>d.RecipientPhotoUrl, o=>o.MapFrom(s=>s.RecipientUser.Photos.FirstOrDefault(x=>x.IsMain).Url))
+                ;
         }
     }
 }

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using BackendAPI.DTO;
 using BackendAPI.Extentions;
 using BackendAPI.Models;
+using BackendAPI.Modules;
 using BackendAPI.Repository.Interface;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,38 +25,40 @@ namespace BackendAPI.Repository.Implement
             return await _context.Likes.FindAsync(likeUserId, sourceUserId);
         }
 
-        public async Task<AppUser> GetUserWithLikes(Guid userId)
+        public async Task<AppUser> GetUserWithLikesInclude(Guid userId)
         {
             return await _context.AppUsers.Include(x => x.LikedUsers).FirstOrDefaultAsync(x => x.Id == userId);
         }
 
-        public async Task<IEnumerable<LikeDto>> GetUserLikes(string predicate, Guid userId)
+        public async Task<PagedList<LikeDto>> GetUserLikes(LikeParams likeParams)
         {
             var users = _context.AppUsers.OrderBy(u => u.UserName).AsQueryable();
             var likes = _context.Likes.AsQueryable();
 
-            switch (predicate) // Lấy những người tương tác với mình thông qua số like
+            switch (likeParams.Predicate) // Lấy những người tương tác với mình thông qua số like
             {
                 case "liked":
-                    likes = likes.Where(like => like.SourceUserId == userId); // TÌm nhưng dòng là mình like
+                    likes = likes.Where(like => like.SourceUserId == likeParams.UserId); // TÌm nhưng dòng là mình like
                     users = likes.Select(like => like.LikedUser); // Lấy ra những AppUser like trong bảng này
                     break;
                 case "likedBy":
-                    likes = likes.Where(like => like.LikedUserId == userId);
-                    users = likes.Select(like => like.LikedUser);
+                    likes = likes.Where(like => like.LikedUserId == likeParams.UserId);
+                    users = likes.Select(like => like.SourceUser);
                     break;
-                default: return new List<LikeDto>();
+                default: return await PagedList<LikeDto>.CreateNullListAsync();
             }
 
-            return await users.Select(u => new LikeDto
+            var likeUsers = users.Select(u => new LikeDto
             {
                 Username = u.UserName,
                 Age = u.DateOfBirth.CalculateAge(),
                 KnownAs = u.KnownAs,
-                PhotoUrl = u.Photos.FirstOrDefault(p=>p.IsMain).Url,
+                PhotoUrl = u.Photos.FirstOrDefault(p => p.IsMain).Url,
                 City = u.City,
                 Id = u.Id
-            }).ToListAsync();
+            });
+
+            return await PagedList<LikeDto>.CreateAsync(likeUsers, likeParams.PageNumber, likeParams.PageSize);
         }
     }
 }

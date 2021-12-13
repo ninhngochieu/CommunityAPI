@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using BackendAPI.Extentions;
 using BackendAPI.Models;
+using BackendAPI.Modules;
 using BackendAPI.Repository.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,18 +22,17 @@ namespace BackendAPI.Controllers
 
         // GET: api/Like
         [HttpGet]
-        public async Task<ActionResult> GetUserLikes(string predicate)
+        public async Task<ActionResult> GetUserLikes([FromQuery]LikeParams likeParams)
         {
-            return OkResponse(await _likeRepository.GetUserLikes(predicate, User.GetUserId()));
-        }
+            likeParams.UserId = User.GetUserId();
 
-        // GET: api/Like/5
-        [HttpGet("{id}", Name = "Get")]
-        public string Get(int id)
-        {
-            return "value";
-        }
+            var userLikes = await _likeRepository.GetUserLikes(likeParams);
+            
+            Response.AddPaginationHeader(userLikes.CurrentPage, userLikes.PageSize, userLikes.TotalCount, userLikes.TotalPages);
 
+            return OkResponse(userLikes);
+        }
+        
         // POST: api/Like
         [HttpPost("{username}")]
         public async Task<ActionResult> AddLike(string username)
@@ -41,7 +41,7 @@ namespace BackendAPI.Controllers
             
             var likedUser = await _userRepository.GetUserAsync(username); // Tìm người cần like
             
-            var sourceUser = await _likeRepository.GetUserWithLikes(sourceUserId); // Tìm người like với list like 1 - n
+            var sourceUser = await _likeRepository.GetUserWithLikesInclude(sourceUserId); // Tìm người like với list like 1 - n
 
             if (likedUser is null) return NotFoundResponse("Không tìm thấy user này");
 
@@ -67,22 +67,6 @@ namespace BackendAPI.Controllers
 
             return BadRequest("Có lỗi khi like user này");
         }
-
-        protected virtual bool IsAuthorize(int sourceUserId)
-        {
-            return sourceUserId != 0;
-        }
-
-        // PUT: api/Like/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
-
-        // DELETE: api/Like/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
-        }
+        
     }
 }

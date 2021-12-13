@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Net.Mail;
 using Microsoft.EntityFrameworkCore;
 
 namespace BackendAPI.Models
@@ -17,6 +18,7 @@ namespace BackendAPI.Models
         public virtual DbSet<AppUser> AppUsers{ get; set; }
         public virtual DbSet<Photo>  Photos { get; set; }
         public virtual DbSet<UserLike> Likes { get; set; }
+        public virtual DbSet<Message> Messages { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             base.OnConfiguring(optionsBuilder);
@@ -39,6 +41,16 @@ namespace BackendAPI.Models
                 .WithMany(s => s.LikeByUsers)
                 .HasForeignKey(l => l.LikedUserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Message>()
+                .HasOne(u=>u.RecipientUser)
+                .WithMany(m=>m.MessageReceived)
+                .OnDelete(DeleteBehavior.Restrict);
+            
+            modelBuilder.Entity<Message>()
+                .HasOne(u=>u.SenderUser)
+                .WithMany(m=>m.MessagesSent)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

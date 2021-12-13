@@ -1,16 +1,7 @@
 namespace BackendAPI.Modules
 {
-    public class UserParams
+    public class UserParams: PaginationParams
     {
-        private int _pageSize = 10;
-        private const int _maxPageSize = 50;
-        public int PageNumber { get; set; } = 1;
-
-        public int PageSize
-        {
-            get => _pageSize;
-            set => _pageSize = value > _maxPageSize ? _maxPageSize : value;
-        }
         internal string CurrentUsername { get; set; }
         public string Gender { get; set; }
         public int MinAge { get; set; }

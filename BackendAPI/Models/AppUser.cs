@@ -25,6 +25,8 @@ namespace BackendAPI.Models
         public IList<UserLike> LikeByUsers { get; set; }
 
         public IList<UserLike> LikedUsers { get; set; }
+        public IList<Message> MessagesSent { get; set; }
+        public IList<Message> MessageReceived { get; set; }
         public int GetAge()
         {
             return DateOfBirth.CalculateAge();

@@ -72,14 +72,14 @@ namespace BackendAPI.Controllers
                 = await _context.AppUsers.Include(p=>p.Photos).SingleOrDefaultAsync(x => x.UserName == loginDTO.Username);
             if (user is null) return UnauthorizedResponse("Tai khoan khong hop le");
 
-            using var hmac = new HMACSHA512(user.PasswordSalt);
+            // using var hmac = new HMACSHA512(user.PasswordSalt);
 
-            var computerHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(loginDTO.Password));
+            // var computerHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(loginDTO.Password));
 
-            if (computerHash.Where((item, index) => item != user.PasswordHash[index]).Any())
-            {
-                return UnauthorizedResponse("Mật khẩu không hợp lệ");
-            }
+            // if (computerHash.Where((item, index) => item != user.PasswordHash[index]).Any())
+            // {
+            //     return UnauthorizedResponse("Mật khẩu không hợp lệ");
+            // }
             return OkResponse(new UserLoginDto
             {
                 Username = user.UserName,
@@ -102,11 +102,11 @@ namespace BackendAPI.Controllers
 
             var user = _mapper.Map<AppUser>(register);
             
-            using var hmac = new HMACSHA512();
+            // using var hmac = new HMACSHA512();
 
             user.UserName = register.Username;
-            user.PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(register.Password));
-            user.PasswordSalt = hmac.Key;
+            // user.PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(register.Password));
+            // user.PasswordSalt = hmac.Key;
             
             _context.Add(user);
             

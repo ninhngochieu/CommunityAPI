@@ -1,15 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using BackendAPI.Extentions;
+using Microsoft.AspNetCore.Identity;
 
 namespace BackendAPI.Models
 {
-    public class AppUser
+    public class AppUser: IdentityUser<Guid>
     {
-        public Guid Id { get; set; }
-        public string UserName { get; set; }
-        public byte[] PasswordHash { get; set; }
-        public byte[] PasswordSalt { get; set; }
         public DateTime DateOfBirth { get; set; }
         public string KnownAs { get; set; }
         public DateTime Created { get; set; } = DateTime.Now;
@@ -27,6 +24,7 @@ namespace BackendAPI.Models
         public IList<UserLike> LikedUsers { get; set; }
         public IList<Message> MessagesSent { get; set; }
         public IList<Message> MessageReceived { get; set; }
+        public IList<AppUserRole> UserRoles { get; set; }
         public int GetAge()
         {
             return DateOfBirth.CalculateAge();

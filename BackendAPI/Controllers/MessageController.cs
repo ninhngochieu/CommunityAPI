@@ -71,6 +71,40 @@ namespace BackendAPI.Controllers
             var currentUserName = User.GetUserName();
             return OkResponse(await _messageRepository.GetMessageThread(currentUserName, username));
         }
+
+        [HttpDelete("{guid}")]
+        public async Task<ActionResult> DeleteMessage(Guid guid)
+        {
+            var userName = User.GetUserName();
+            var message = await _messageRepository.GetMessage(guid);
+            if (message.SenderUser.UserName != userName && message.RecipientUser.UserName != userName)
+            {
+                //Nếu người gửi ko phải là ana và người nhận cũng phải là ana
+                return UnauthorizedResponse("Bạn không có quyền xoá tin nhắn này");
+            }
+
+            if (message.SenderUser.UserName == userName)
+            {
+                message.SenderDeleted = true;
+            }
+
+            if (message.RecipientUser.UserName == userName)
+            {
+                message.RecipientDeleted = true;
+            }
+
+            if (message.SenderDeleted && message.RecipientDeleted)
+            {
+                _messageRepository.DeleteMessage(message);
+            }
+
+            if (await _messageRepository.SaveAllAsync())
+            {
+                return OkResponse("Đã xoá tin nhắn");
+            }
+
+            return BadRequestResponse("Có lỗi xảy ra khi xoá tin nhắn");
+        }
     }
     
 }

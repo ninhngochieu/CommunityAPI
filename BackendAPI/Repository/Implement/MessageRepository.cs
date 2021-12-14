@@ -35,7 +35,7 @@ namespace BackendAPI.Services.Implement
 
         public async Task<Message> GetMessage(Guid guid)
         {
-            return await _context.Messages.FindAsync(guid);
+            return await _context.Messages.Include(u=>u.SenderUser).Include(u=>u.RecipientUser).SingleOrDefaultAsync(x=>x.Id == guid);
         }
 
         public async Task<PagedList<MessageDto>> GetMessageForUser(MessageParams messageParams)
@@ -43,9 +43,9 @@ namespace BackendAPI.Services.Implement
             var queryable = _context.Messages.OrderByDescending(m => m.MessageSent).AsQueryable();
             queryable = messageParams.Container switch
             {
-                "inbox" => queryable.Where(u => u.RecipientUser.UserName == messageParams.Username), //Tìm những mail được gửi cho mình, có cùng id với mình
-                "outbox" => queryable.Where(u => u.SenderUser.UserName == messageParams.Username), // Tìm những mail mình gửi cho người ta
-                _=> queryable.Where(u=>u.RecipientUser.UserName == messageParams.Username && u.DateRead == null) // Tìm những mail người ta gửi cho mình mà chưa đọc
+                "inbox" => queryable.Where(u => u.RecipientUser.UserName == messageParams.Username && u.RecipientDeleted == false), //Tìm những mail được gửi cho mình, có cùng id với mình
+                "outbox" => queryable.Where(u => u.SenderUser.UserName == messageParams.Username && u.SenderDeleted== false), // Tìm những mail mình gửi cho người ta
+                _=> queryable.Where(u=>u.RecipientUser.UserName == messageParams.Username &&u.RecipientDeleted == false && u.DateRead == null) // Tìm những mail người ta gửi cho mình mà chưa đọc
             };
 
             var messageDtos = queryable.AsNoTracking().ProjectTo<MessageDto>(_mapper.ConfigurationProvider);
@@ -58,8 +58,8 @@ namespace BackendAPI.Services.Implement
             var messages = await _context.Messages//Lấy luồng mail
                 .Include(u=>u.SenderUser).ThenInclude(p=>p.Photos)
                 .Include(u=>u.RecipientUser).ThenInclude(p=>p.Photos)
-                .Where(m => m.RecipientUser.UserName == currentUsername && m.SenderUser.UserName == recipientUsername || 
-                            m.RecipientUser.UserName == recipientUsername && m.SenderUser.UserName == currentUsername)
+                .Where(m => m.RecipientUser.UserName == currentUsername && m.SenderUser.UserName == recipientUsername && m.RecipientDeleted == false || 
+                            m.RecipientUser.UserName == recipientUsername && m.SenderUser.UserName == currentUsername && m.SenderDeleted == false)
                 .OrderBy(m=>m.MessageSent)
                 .ToListAsync();
 

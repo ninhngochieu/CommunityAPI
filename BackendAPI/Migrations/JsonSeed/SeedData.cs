@@ -29,9 +29,9 @@ namespace BackendAPI.Migrations.JsonSeed
                 var hmac = new HMACSHA512();
                 user.UserName = user.UserName.ToLower();
 
-                user.PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes("123456"));
-
-                user.PasswordSalt = hmac.Key;
+                // user.PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes("123456"));
+                //
+                // user.PasswordSalt = hmac.Key;
 
                 context.AppUsers.Add(user);
             });

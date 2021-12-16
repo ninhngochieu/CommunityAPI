@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using BackendAPI.Extentions;
 using BackendAPI.Models;
 using BackendAPI.Modules;
+using BackendAPI.SignalR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -45,6 +46,7 @@ namespace BackendAPI
             services.AddCors();
             services.AddAuthExtensions(_configuration);
             services.AddAutoMapper(typeof(MapperProfile).Assembly);
+            services.AddSignalR();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -62,7 +64,10 @@ namespace BackendAPI
 
             app.UseRouting();
 
-            app.UseCors(policy => policy.AllowAnyHeader().AllowAnyMethod().WithOrigins("http://localhost:4200"));
+            app.UseCors(policy => policy.AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials() // Authorize Hub
+                .WithOrigins("http://localhost:4200"));
 
             app.UseAuthentication();
 
@@ -71,6 +76,8 @@ namespace BackendAPI
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                endpoints.MapHub<PresenceHub>("hubs/presence");
+                endpoints.MapHub<MessagesHub>("hubs/message");
             });
         }
     }

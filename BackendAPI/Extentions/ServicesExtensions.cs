@@ -5,6 +5,7 @@ using BackendAPI.Repository.Implement;
 using BackendAPI.Repository.Interface;
 using BackendAPI.Services.Implement;
 using BackendAPI.Services.Interface;
+using BackendAPI.SignalR;
 using CloudinaryDotNet;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,6 +19,7 @@ namespace BackendAPI.Extentions
             IConfiguration configuration)
         {
             services.Configure<CloudinarySettings>(configuration.GetSection("CloudinarySettings"));
+            services.AddSingleton<PresenceTracker>();
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IPhotoService, PhotoService>();
             services.AddScoped<IUserRepository, UserRepository>();

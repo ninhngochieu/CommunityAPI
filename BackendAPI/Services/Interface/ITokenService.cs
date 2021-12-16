@@ -1,9 +1,10 @@
-﻿using BackendAPI.Models;
+﻿using System.Threading.Tasks;
+using BackendAPI.Models;
 
-namespace BackendAPI
+namespace BackendAPI.Services.Interface
 {
     public interface ITokenService
     {
-        string CreateToken(AppUser user);
+        Task<string> CreateToken(AppUser user);
     }
 }

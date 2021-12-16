@@ -1,7 +1,4 @@
-using System;
 using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading.Tasks;
 using AutoMapper;
 using BackendAPI.DTO;
@@ -12,6 +9,7 @@ using BackendAPI.Repository.Interface;
 using BackendAPI.Services.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,20 +23,24 @@ namespace BackendAPI.Controllers
         private readonly IMapper _mapper;
         private readonly IUserRepository _userRepository;
         private readonly IPhotoService _photoService;
+        private readonly UserManager<AppUser> _userManager;
+        private readonly SignInManager<AppUser> _signInManager;
 
-        public UserController(CommunityContext context, ITokenService tokenService, IMapper mapper, IUserRepository userRepository, IPhotoService photoService)
+        public UserController(CommunityContext context, ITokenService tokenService, IMapper mapper,
+            IUserRepository userRepository, IPhotoService photoService, UserManager<AppUser> userManager, SignInManager<AppUser> signInManager)
         {
             _context = context;
             _tokenService = tokenService;
             _mapper = mapper;
             _userRepository = userRepository;
             _photoService = photoService;
+            _userManager = userManager;
+            _signInManager = signInManager;
         }
 
         // GET: api/User
         
         [HttpGet]
-        [Authorize]
         public async Task<ActionResult> GetUsers([FromQuery]UserParams @params)
         {
             var user = await _userRepository.GetUserAsync(User.GetUserName());
@@ -68,9 +70,18 @@ namespace BackendAPI.Controllers
         [HttpPost("Login")]
         public async Task<ActionResult> DoLogin(LoginDto loginDTO)
         {
-            AppUser user
-                = await _context.AppUsers.Include(p=>p.Photos).SingleOrDefaultAsync(x => x.UserName == loginDTO.Username);
+            var user
+                = await _userManager.Users.Include(p => p.Photos)
+                    .SingleOrDefaultAsync(x => x.UserName == loginDTO.Username.ToLower());
+            
             if (user is null) return UnauthorizedResponse("Tai khoan khong hop le");
+
+            var result = await _signInManager.CheckPasswordSignInAsync(user, loginDTO.Password, false);
+
+            if (!result.Succeeded)
+            {
+                return UnauthorizedResponse("Tài khoản hoặc mật khẩu không hợp lệ");
+            }
 
             // using var hmac = new HMACSHA512(user.PasswordSalt);
 
@@ -80,10 +91,11 @@ namespace BackendAPI.Controllers
             // {
             //     return UnauthorizedResponse("Mật khẩu không hợp lệ");
             // }
+            
             return OkResponse(new UserLoginDto
             {
                 Username = user.UserName,
-                Token = _tokenService.CreateToken(user),
+                Token = await _tokenService.CreateToken(user),
                 PhotoUrl = user.Photos.FirstOrDefault(x=>x.IsMain)?.Url,
                 Gender = user.Gender,
                 KnownAs = user.KnownAs
@@ -105,17 +117,32 @@ namespace BackendAPI.Controllers
             // using var hmac = new HMACSHA512();
 
             user.UserName = register.Username;
+
+            var result = await _userManager.CreateAsync(user, register.Password);
+
+            if (!result.Succeeded)
+            {
+                return BadRequestResponse(result.Errors);
+            }
+            
+            var roleResult = await _userManager.AddToRoleAsync(user, "Member");
+
+            if (!roleResult.Succeeded)
+            {
+                return BadRequestResponse(roleResult.Errors);
+            }
+
             // user.PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(register.Password));
             // user.PasswordSalt = hmac.Key;
             
-            _context.Add(user);
-            
-            await _context.SaveChangesAsync();
+            // _context.Add(user);
+            //
+            // await _context.SaveChangesAsync();
             
             return OkResponse(new UserLoginDto()
             {
                 Username = user.UserName,
-                Token = _tokenService.CreateToken(user),
+                Token = await _tokenService.CreateToken(user),
                 PhotoUrl = "",
                 Gender =user.Gender,
                 KnownAs = user.KnownAs
@@ -124,7 +151,7 @@ namespace BackendAPI.Controllers
 
         private async Task<bool> UserExists(string username)
         {
-            return await _context.AppUsers.AnyAsync(u => u.UserName == username.ToLower());
+            return await _userManager.Users.AnyAsync(u => u.UserName == username.ToLower());
         }
 
         [HttpPut]
@@ -132,6 +159,11 @@ namespace BackendAPI.Controllers
         {
             var username = User.GetUserName();
             var user = await _userRepository.GetUserAsync(username);
+
+            if (user is null)
+            {
+                return UnauthorizedResponse("Không đủ quyền hạn để thực hiện hành động này");
+            }
             
             _mapper.Map(memberUpdateDto, user);
 

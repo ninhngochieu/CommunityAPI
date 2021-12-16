@@ -36,7 +36,7 @@ namespace BackendAPI
         {
             services.AddDbContext<CommunityContext>(options =>
             {
-                options.UseSqlite(_configuration.GetConnectionString("DefaultConnection"));
+                options.UseSqlite(_configuration.GetConnectionString("DefaultConnection")).LogTo(Console.WriteLine,LogLevel.Information);
             });
             services.AddControllers();
             services.AddSwaggerExtensions();

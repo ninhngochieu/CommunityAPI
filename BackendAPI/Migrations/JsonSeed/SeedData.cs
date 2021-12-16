@@ -67,12 +67,22 @@ namespace BackendAPI.Migrations.JsonSeed
             }
 
             users.ForEach(Action);
+            
+            {//Seed Admin
+                var admin = new AppUser() {UserName = "admin"};
 
-            var admin = new AppUser() {UserName = "admin"};
+                await userManager.CreateAsync(admin, "123456");
 
-            await userManager.CreateAsync(admin, "123456");
+                await userManager.AddToRolesAsync(admin, new[] {"Admin", "Moderator", "Member"});
+            }
+            
+            {//Seed Moderator
+                var mod = new AppUser() {UserName = "mod"};
 
-            await userManager.AddToRolesAsync(admin, new[] {"Admin", "Moderator", "Member"});
+                await userManager.CreateAsync(mod, "123456");
+
+                await userManager.AddToRolesAsync(mod, new[] {"Moderator", "Member"});
+            }
         }
     }
 }

@@ -27,6 +27,13 @@ namespace BackendAPI.Extentions
                 .AddSignInManager<SignInManager<AppUser>>()
                 .AddRoleValidator<RoleValidator<AppRole>>()
                 .AddEntityFrameworkStores<CommunityContext>();
+
+            services.AddAuthorization(option =>
+            {
+                option.AddPolicy("RequireAdminRole", policy => policy.RequireRole("Admin"));
+                option.AddPolicy("ModeratePhotoRole", policy => policy.RequireRole("Admin", "Moderator"));
+            });
+            
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
             {
                 options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters

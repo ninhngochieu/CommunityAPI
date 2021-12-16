@@ -17,7 +17,8 @@ namespace BackendAPI.Controllers
             _userManager = userManager;
         }
 
-        [Authorize(Policy="RequireAdminRole")]
+        // [Authorize(Policy="RequireAdminRole")]
+        [Authorize(Policy="ModeratePhotoRole")]
         [HttpGet("Users-With-Roles")]
         public async Task<ActionResult> GetUsersWithRoles()
         {

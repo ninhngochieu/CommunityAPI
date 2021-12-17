@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -37,7 +38,8 @@ namespace BackendAPI
         {
             services.AddDbContext<CommunityContext>(options =>
             {
-                options.UseSqlite(_configuration.GetConnectionString("DefaultConnection")).LogTo(Console.WriteLine,LogLevel.Information);
+                // options.UseSqlite(_configuration.GetConnectionString("DefaultConnection")).LogTo(Console.WriteLine,LogLevel.Information);
+                options.UseNpgsql(_configuration.GetConnectionString("DefaultConnection")).LogTo(Console.WriteLine,LogLevel.Information);
             });
             services.AddControllers();
             services.AddSwaggerExtensions();

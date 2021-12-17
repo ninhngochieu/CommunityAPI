@@ -31,13 +31,10 @@ namespace BackendAPI.Migrations.JsonSeed
                 new() {Name = "Admin"},
                 new() {Name = "Moderator"}
             };
-
-            async void Action(AppRole r)
+            foreach (var appRole in roles)
             {
-                await roleManager.CreateAsync(r);
+                await roleManager.CreateAsync(appRole);
             }
-
-            roles.ForEach(Action);
         }
 
         private static async Task SeedUserData(UserManager<AppUser> userManager)
@@ -50,23 +47,14 @@ namespace BackendAPI.Migrations.JsonSeed
 
             Debug.Assert(users != null, nameof(users) + " != null");
 
-            async void Action(AppUser user)
+            foreach (var user in users)
             {
-                // var hmac = new HMACSHA512();
                 user.UserName = user.UserName.ToLower();
 
                 await userManager.CreateAsync(user, "123456");
 
-                await userManager.AddToRoleAsync(user, "Member");
-
-                // user.PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes("123456"));
-                //
-                // user.PasswordSalt = hmac.Key;
-
-                // context.AppUsers.Add(user);
+                await userManager.AddToRoleAsync(user, "Member");   
             }
-
-            users.ForEach(Action);
             
             {//Seed Admin
                 var admin = new AppUser() {UserName = "admin"};

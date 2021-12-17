@@ -76,15 +76,16 @@ namespace BackendAPI.Repository.Implement
         public async Task<IEnumerable<MessageDto>> GetMessageThread(string currentUsername, string recipientUsername)
         {
             var messages = await _context.Messages//Lấy luồng mail
-                .Include(u=>u.SenderUser).ThenInclude(p=>p.Photos)
-                .Include(u=>u.RecipientUser).ThenInclude(p=>p.Photos)
+                // .Include(u=>u.SenderUser).ThenInclude(p=>p.Photos)
+                // .Include(u=>u.RecipientUser).ThenInclude(p=>p.Photos)
                 .Where(m => m.RecipientUser.UserName == currentUsername && m.SenderUser.UserName == recipientUsername && m.RecipientDeleted == false || 
                             m.RecipientUser.UserName == recipientUsername && m.SenderUser.UserName == currentUsername && m.SenderDeleted == false)
                 .OrderBy(m=>m.MessageSent)
+                .ProjectTo<MessageDto>(_mapper.ConfigurationProvider)
                 .ToListAsync();
 
             // Tìm mail mà người nhận là mình, chưa đọc, và mình chat với người này trong luồng tin nhắn. Người kia gửi cho mình thì mình mới thấy
-            var unreadMessages = messages.Where(m => m.DateRead == null && m.RecipientUser.UserName == currentUsername).ToList();
+            var unreadMessages = messages.Where(m => m.DateRead == null && m.RecipientUsername == currentUsername).ToList();
             if (unreadMessages.Any())
             {
                 unreadMessages.ForEach(m =>
@@ -94,7 +95,8 @@ namespace BackendAPI.Repository.Implement
                 // await _context.SaveChangesAsync();
             }
 
-            return _mapper.Map<IEnumerable<MessageDto>>(messages);
+            // return _mapper.Map<IEnumerable<MessageDto>>(messages);
+            return messages;
         }
 
 

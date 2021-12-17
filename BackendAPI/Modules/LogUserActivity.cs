@@ -19,20 +19,20 @@ namespace BackendAPI.Modules
             // var userName = resultContext.HttpContext.User.GetUserName();
 
             var userId = resultContext.HttpContext.User.GetUserId();
-            
-            
-            var userRepository = resultContext.HttpContext.RequestServices.GetService<IUserRepository>();
 
-            Debug.Assert(userRepository != null, nameof(userRepository) + " != null");
-            // var user = await userRepository.GetUserAsync(userName);
 
-            var user = await userRepository.GetUserByIdAsync(userId);
+            var unitOfWork = resultContext.HttpContext.RequestServices.GetService<IUnitOfWork>();
+
+            Debug.Assert(unitOfWork != null, nameof(unitOfWork) + " != null");
+            // var user = await unitOfWork.UserRepository.GetUserAsync(userName);
+
+            var user = await unitOfWork.UserRepository.GetUserByIdAsync(userId);
             
             if (user is null) return;
             
             user.LastActive = DateTime.Now;
 
-            await userRepository.SaveAllAsync();
+            await unitOfWork.Complete();
         }
     }
 }

@@ -44,6 +44,11 @@ namespace BackendAPI.SignalR
 
             var messages = await _unitOfWork.MessageRepository.GetMessageThread(Context.User.GetUserName(), otherUser);
 
+            if (_unitOfWork.HasChange())
+            {
+                await _unitOfWork.Complete();
+            }
+            
             await Clients.Group(groupName).SendAsync(_receiveMessageThread, messages);
         }
 

@@ -91,7 +91,7 @@ namespace BackendAPI.Repository.Implement
                 {
                     m.DateRead = DateTime.UtcNow;
                 });
-                await _context.SaveChangesAsync();
+                // await _context.SaveChangesAsync();
             }
 
             return _mapper.Map<IEnumerable<MessageDto>>(messages);

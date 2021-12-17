@@ -54,16 +54,5 @@ namespace BackendAPI.SignalR
             
             return Task.FromResult(onlineUsers);
         }
-        
-        public Task<List<string>> GetConnectionForUser(string username)
-        {
-            List<string> connectionId;
-            lock (_onlineUsers)
-            {
-                connectionId = _onlineUsers.GetValueOrDefault(username);
-            }
-
-            return Task.FromResult(connectionId);
-        }
     }
 }

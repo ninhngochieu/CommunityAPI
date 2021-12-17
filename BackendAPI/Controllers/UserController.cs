@@ -18,18 +18,21 @@ namespace BackendAPI.Controllers
 
     public class UserController : BaseController
     {
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly CommunityContext _context;
         private readonly ITokenService _tokenService;
         private readonly IMapper _mapper;
+        private readonly IUserRepository _userRepository;
         private readonly IPhotoService _photoService;
         private readonly UserManager<AppUser> _userManager;
         private readonly SignInManager<AppUser> _signInManager;
 
-        public UserController(IUnitOfWork unitOfWork,ITokenService tokenService, IMapper mapper, IPhotoService photoService, UserManager<AppUser> userManager, SignInManager<AppUser> signInManager)
+        public UserController(CommunityContext context, ITokenService tokenService, IMapper mapper,
+            IUserRepository userRepository, IPhotoService photoService, UserManager<AppUser> userManager, SignInManager<AppUser> signInManager)
         {
-            _unitOfWork = unitOfWork;
+            _context = context;
             _tokenService = tokenService;
             _mapper = mapper;
+            _userRepository = userRepository;
             _photoService = photoService;
             _userManager = userManager;
             _signInManager = signInManager;
@@ -40,7 +43,7 @@ namespace BackendAPI.Controllers
         [HttpGet]
         public async Task<ActionResult> GetUsers([FromQuery]UserParams @params)
         {
-            var user = await _unitOfWork.UserRepository.GetUserAsync(User.GetUserName());
+            var user = await _userRepository.GetUserAsync(User.GetUserName());
             //Mục đích là để loại trừ người đang lọc
 
             // if (user is null)
@@ -50,7 +53,7 @@ namespace BackendAPI.Controllers
             //Tận dụng @param để đẩy xuống // internal get set
             @params.CurrentUsername = user.UserName;
             
-            var users = await _unitOfWork.UserRepository.GetUsersAsync(@params);
+            var users = await _userRepository.GetUsersAsync(@params);
          
             Response.AddPaginationHeader(users.CurrentPage, users.PageSize, users.TotalCount, users.TotalPages);
             
@@ -60,7 +63,7 @@ namespace BackendAPI.Controllers
         [HttpGet("{username}", Name = "GetUser")]
         public async Task<ActionResult> GetUser(string username)
         {
-            var user = await _unitOfWork.UserRepository.GetUserDtoAsync(username);
+            var user = await _userRepository.GetUserDtoAsync(username);
             return user is null ? NotFoundResponse("Không tìm thấy user này") : OkResponse(user);
         }
         
@@ -155,7 +158,7 @@ namespace BackendAPI.Controllers
         public async Task<ActionResult> UpdateUser(MemberUpdateDto memberUpdateDto)
         {
             var username = User.GetUserName();
-            var user = await _unitOfWork.UserRepository.GetUserAsync(username);
+            var user = await _userRepository.GetUserAsync(username);
 
             if (user is null)
             {
@@ -164,9 +167,9 @@ namespace BackendAPI.Controllers
             
             _mapper.Map(memberUpdateDto, user);
 
-            _unitOfWork.UserRepository.UpdateUser(user);
+            _userRepository.UpdateUser(user);
             
-            if (await _unitOfWork.Complete())
+            if (await _userRepository.SaveAllAsync())
             {
                 return OkResponse(_mapper.Map<MemberDto>(user));
             }
@@ -178,7 +181,7 @@ namespace BackendAPI.Controllers
         [HttpPost("Add-Photos")]
         public async Task<ActionResult<PhotoDto>> AddPhoto(IFormFile file)
         {
-            var user = await _unitOfWork.UserRepository.GetUserAsync(User.GetUserName());
+            var user = await _userRepository.GetUserAsync(User.GetUserName());
             var result = await _photoService.AddPhotoAsync(file);
             if (result.Error != null) return BadRequestResponse(result.Error.Message);
             var photo = new Photo
@@ -192,7 +195,7 @@ namespace BackendAPI.Controllers
             }
             user.Photos.Add(photo);
 
-            if (await _unitOfWork.Complete())
+            if (await _userRepository.SaveAllAsync())
             {
                 // return OkResponse(_mapper.Map<PhotoDto>(photo));
                 return CreatedAtRoute("GetUser", new {username = user.UserName},_mapper.Map<PhotoDto>(photo));
@@ -204,7 +207,7 @@ namespace BackendAPI.Controllers
         [HttpPut("Set-Main-Photo/{photoId}")]
         public async Task<ActionResult> SetMainPhoto(int photoId)
         {
-            var user = await _unitOfWork.UserRepository.GetUserAsync(User.GetUserName());
+            var user = await _userRepository.GetUserAsync(User.GetUserName());
             var photo = user.Photos.FirstOrDefault(x=>x.Id == photoId);
 
             if (photo is null)
@@ -226,7 +229,7 @@ namespace BackendAPI.Controllers
 
             photo.IsMain = true;
 
-            if (await _unitOfWork.Complete()) return OkResponse("Đặt ảnh mặc định thành công");
+            if (await _userRepository.SaveAllAsync()) return OkResponse("Đặt ảnh mặc định thành công");
 
             return BadRequestResponse("Có lỗi khi đặt ảnh mặc định");
         }
@@ -234,7 +237,7 @@ namespace BackendAPI.Controllers
         [HttpDelete("Delete-Photo/{photoId}")]
         public async Task<ActionResult> DeletePhoto(int photoId)
         {
-            var user = await _unitOfWork.UserRepository.GetUserAsync(User.GetUserName());
+            var user = await _userRepository.GetUserAsync(User.GetUserName());
 
             var photo =  user.Photos.FirstOrDefault(x => x.Id == photoId);
 
@@ -260,7 +263,7 @@ namespace BackendAPI.Controllers
 
             user.Photos.Remove(photo);
 
-            if (await _unitOfWork.Complete())
+            if (await _userRepository.SaveAllAsync())
             {
                 return OkResponse("Xoá ảnh thành công");
             }

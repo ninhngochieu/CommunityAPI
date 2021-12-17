@@ -12,7 +12,7 @@ namespace BackendAPI.Repository.Interface
         Task<PagedList<MemberDto>> GetUsersAsync(UserParams @params);
         Task<MemberDto> GetUserDtoAsync(string username);
 
-        // Task<bool> SaveAllAsync();
+        Task<bool> SaveAllAsync();
         Task<AppUser> GetUserAsync(string username);
         void UpdateUser(AppUser user);
         Task<AppUser> GetUserByIdAsync(Guid userId);

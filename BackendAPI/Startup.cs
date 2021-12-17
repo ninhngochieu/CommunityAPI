@@ -6,8 +6,6 @@ using System.Threading.Tasks;
 using BackendAPI.Extentions;
 using BackendAPI.Models;
 using BackendAPI.Modules;
-using BackendAPI.Repository.Implement;
-using BackendAPI.Repository.Interface;
 using BackendAPI.SignalR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -44,7 +42,7 @@ namespace BackendAPI
             services.AddControllers();
             services.AddSwaggerExtensions();
             services.AddServicesExtensions(_configuration);
-            services.AddScoped<IUnitOfWork, UnitOfWork>();
+
             services.AddCors();
             services.AddAuthExtensions(_configuration);
             services.AddAutoMapper(typeof(MapperProfile).Assembly);

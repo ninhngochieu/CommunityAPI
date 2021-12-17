@@ -19,20 +19,18 @@ namespace BackendAPI.SignalR
         private readonly IUserRepository _userRepository;
         private readonly IHubContext<PresenceHub> _hubContext;
         private readonly PresenceTracker _tracker;
-        private readonly IUnitOfWork _unitOfWork;
         private const string _newMessageReceived = "NewMessageReceived";
         private const string _newMessage = "NewMessage";
         private const string _receiveMessageThread = "ReceiveMessageThread";
 
         public MessagesHub(IMessageRepository messageRepository, IMapper mapper, IUserRepository userRepository,
-            IHubContext<PresenceHub> hubContext, PresenceTracker tracker, IUnitOfWork unitOfWork)
+            IHubContext<PresenceHub> hubContext, PresenceTracker tracker)
         {
             _messageRepository = messageRepository;
             _mapper = mapper;
             _userRepository = userRepository;
             _hubContext = hubContext;
             _tracker = tracker;
-            _unitOfWork = unitOfWork;
         }
 
         public override async Task OnConnectedAsync()
@@ -106,7 +104,7 @@ namespace BackendAPI.SignalR
             
             _messageRepository.AddMessage(message);
 
-            if (await _unitOfWork.Complete())
+            if (await _messageRepository.SaveAllAsync())
             {
                 // var groupName = GetGroupName(sender.UserName, recipient.UserName);
 
@@ -136,7 +134,7 @@ namespace BackendAPI.SignalR
             
             messageGroup.Connections.Add(connection);
 
-            return await _unitOfWork.Complete();
+            return await _messageRepository.SaveAllAsync();
         }
 
         private async Task RemoveFromMessageGroup(string connectionId)
@@ -145,7 +143,7 @@ namespace BackendAPI.SignalR
             
             _messageRepository.RemoveConnection(connection);
 
-            await _unitOfWork.Complete();
+            await _messageRepository.SaveAllAsync();
         }
     }
 }

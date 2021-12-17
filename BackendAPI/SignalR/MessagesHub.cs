@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using BackendAPI.DTO;
@@ -35,6 +36,8 @@ namespace BackendAPI.SignalR
 
             await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
 
+            await AddToGroup(Context, groupName);
+
             var messages = await _messageRepository.GetMessageThread(Context.User.GetUserName(), otherUser);
 
             await Clients.Group(groupName).SendAsync(_receiveMessageThread, messages);
@@ -69,20 +72,57 @@ namespace BackendAPI.SignalR
                 Content = messageDto.Content,
             };
 
+            var groupName = GetGroupName(sender.UserName, recipient.UserName);
+
+            var messageGroup = await _messageRepository.GetMessageGroup(groupName);
+            // Trong 1 luồng chat sẽ có 2 người. Nếu connection mà thiếu người nhận --> Họ đã off
+            if (messageGroup.Connections.Any(x=>x.Username == recipient.UserName)) // Nếu group message này có bất kỳ ai là người nhận
+            {
+                message.DateRead = DateTime.UtcNow;
+            }
+            
             _messageRepository.AddMessage(message);
 
             if (await _messageRepository.SaveAllAsync())
             {
-                var groupName = GetGroupName(sender.UserName, recipient.UserName);
+                // var groupName = GetGroupName(sender.UserName, recipient.UserName);
 
                 await Clients.Group(groupName).SendAsync(_newMessage, _mapper.Map<MessageDto>(message));
             };
             
         }
 
-        public override Task OnDisconnectedAsync(Exception? exception)
+        public override async Task OnDisconnectedAsync(Exception? exception)
         {
-            return base.OnDisconnectedAsync(exception);
+            await RemoveFromMessageGroup(Context.ConnectionId);
+            await base.OnDisconnectedAsync(exception);
+        }
+
+        private async Task<bool> AddToGroup(HubCallerContext caller, string groupName)
+        {
+            // Thêm connection hiện tại vô group
+            var messageGroup = await _messageRepository.GetMessageGroup(groupName);
+
+            var connection = new Connection(Context.ConnectionId, Context.User.GetUserName());
+
+            if (messageGroup is null)
+            {
+                messageGroup = new Group(groupName);
+                _messageRepository.AddGroup(messageGroup);
+            }
+            
+            messageGroup.Connections.Add(connection);
+
+            return await _messageRepository.SaveAllAsync();
+        }
+
+        private async Task RemoveFromMessageGroup(string connectionId)
+        {
+            var connection = await _messageRepository.GetConnection(connectionId);
+            
+            _messageRepository.RemoveConnection(connection);
+
+            await _messageRepository.SaveAllAsync();
         }
     }
 }

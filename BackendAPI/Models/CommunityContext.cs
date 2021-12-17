@@ -22,6 +22,8 @@ namespace BackendAPI.Models
         public virtual DbSet<Photo>  Photos { get; set; }
         public virtual DbSet<UserLike> Likes { get; set; }
         public virtual DbSet<Message> Messages { get; set; }
+        public virtual DbSet<Group>Groups { get; set; }
+        public virtual DbSet<Connection> Connections { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             base.OnConfiguring(optionsBuilder);

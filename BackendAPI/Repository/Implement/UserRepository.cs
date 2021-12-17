@@ -76,10 +76,10 @@ namespace BackendAPI.Repository.Implement
         {
             return  _mapper.Map<MemberDto>( await GetUserAsync(username));
         }
-        public async Task<bool> SaveAllAsync()
-        {
-            return await _context.SaveChangesAsync() != 0;
-        }
+        // public async Task<bool> SaveAllAsync()
+        // {
+        //     return await _context.SaveChangesAsync() != 0;
+        // }
 
         public async Task<AppUser> GetUserAsync(string username)
         {

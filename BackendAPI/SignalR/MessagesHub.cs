@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -16,14 +17,20 @@ namespace BackendAPI.SignalR
         private readonly IMessageRepository _messageRepository;
         private readonly IMapper _mapper;
         private readonly IUserRepository _userRepository;
+        private readonly IHubContext<PresenceHub> _hubContext;
+        private readonly PresenceTracker _tracker;
+        private const string _newMessageReceived = "NewMessageReceived";
         private const string _newMessage = "NewMessage";
         private const string _receiveMessageThread = "ReceiveMessageThread";
 
-        public MessagesHub(IMessageRepository messageRepository,IMapper mapper,IUserRepository userRepository)
+        public MessagesHub(IMessageRepository messageRepository, IMapper mapper, IUserRepository userRepository,
+            IHubContext<PresenceHub> hubContext, PresenceTracker tracker)
         {
             _messageRepository = messageRepository;
             _mapper = mapper;
             _userRepository = userRepository;
+            _hubContext = hubContext;
+            _tracker = tracker;
         }
 
         public override async Task OnConnectedAsync()
@@ -79,6 +86,20 @@ namespace BackendAPI.SignalR
             if (messageGroup.Connections.Any(x=>x.Username == recipient.UserName)) // Nếu group message này có bất kỳ ai là người nhận
             {
                 message.DateRead = DateTime.UtcNow;
+            }
+            else
+            {
+                var connectionForUser = await _tracker.GetConnectionForUser(recipient.UserName); // Lấy tất cả connection id
+
+                if (connectionForUser is not null)
+                {
+                    // Gửi tất cả thông tin xuống Clients theo connection Id ngoại trừ mình
+                    await _hubContext.Clients.Clients(connectionForUser).SendAsync(_newMessageReceived, new
+                    {
+                        username = sender.UserName,
+                        knownAs = sender.KnownAs
+                    });
+                }
             }
             
             _messageRepository.AddMessage(message);

@@ -11,13 +11,11 @@ namespace BackendAPI.Controllers
     [Authorize]
     public class LikeController : BaseController
     {
-        private readonly IUserRepository _userRepository;
-        private readonly ILikeRepository _likeRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public LikeController(IUserRepository userRepository, ILikeRepository likeRepository)
+        public LikeController(IUnitOfWork unitOfWork)
         {
-            _userRepository = userRepository;
-            _likeRepository = likeRepository;
+            _unitOfWork = unitOfWork;
         }
 
         // GET: api/Like
@@ -26,7 +24,7 @@ namespace BackendAPI.Controllers
         {
             likeParams.UserId = User.GetUserId();
 
-            var userLikes = await _likeRepository.GetUserLikes(likeParams);
+            var userLikes = await _unitOfWork.LikeRepository.GetUserLikes(likeParams);
             
             Response.AddPaginationHeader(userLikes.CurrentPage, userLikes.PageSize, userLikes.TotalCount, userLikes.TotalPages);
 
@@ -39,16 +37,16 @@ namespace BackendAPI.Controllers
         {
             var sourceUserId = User.GetUserId(); // Lấy người like
             
-            var likedUser = await _userRepository.GetUserAsync(username); // Tìm người cần like
+            var likedUser = await _unitOfWork.UserRepository.GetUserAsync(username); // Tìm người cần like
             
-            var sourceUser = await _likeRepository.GetUserWithLikesInclude(sourceUserId); // Tìm người like với list like 1 - n
+            var sourceUser = await _unitOfWork.LikeRepository.GetUserWithLikesInclude(sourceUserId); // Tìm người like với list like 1 - n
 
             if (likedUser is null) return NotFoundResponse("Không tìm thấy user này");
 
             if (sourceUser.UserName == username) return BadRequestResponse("Bạn không thể like chính mình");
 
             //Lỗi
-            var userLike = await _likeRepository.GetUserLike(sourceUserId, likedUser.Id); // Tìm lượt like của người này với người kia
+            var userLike = await _unitOfWork.LikeRepository.GetUserLike(sourceUserId, likedUser.Id); // Tìm lượt like của người này với người kia
 
             if (userLike is not null) return BadRequestResponse("Bạn đã like user này rồi");
 
@@ -60,7 +58,7 @@ namespace BackendAPI.Controllers
             
             sourceUser.LikedUsers.Add(userLike);
 
-            if (await _userRepository.SaveAllAsync())
+            if (await _unitOfWork.Complete())
             {
                 return OkResponse("Đã like");
             }

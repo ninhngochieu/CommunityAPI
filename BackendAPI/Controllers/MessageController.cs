@@ -6,7 +6,6 @@ using BackendAPI.Extentions;
 using BackendAPI.Models;
 using BackendAPI.Modules;
 using BackendAPI.Repository.Interface;
-using BackendAPI.Services.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,15 +14,14 @@ namespace BackendAPI.Controllers
     [Authorize]
     public class MessageController : BaseController
     {
-        private readonly IUserRepository _userRepository;
-        private readonly IMessageRepository _messageRepository;
-        private readonly IMapper _mapper;
 
-        public MessageController(IUserRepository userRepository, IMessageRepository messageRepository, IMapper mapper)
+        private readonly IMapper _mapper;
+        private readonly IUnitOfWork _unitOfWork;
+
+        public MessageController(IMapper mapper, IUnitOfWork unitOfWork)
         {
-            _userRepository = userRepository;
-            _messageRepository = messageRepository;
             _mapper = mapper;
+            _unitOfWork = unitOfWork;
         }
 
         [HttpPost]
@@ -34,8 +32,8 @@ namespace BackendAPI.Controllers
             if (userName == messageDto.RecipientUsername.ToLower())
                 return BadRequestResponse("Bạn không thể gửi thư cho chính mình!");
 
-            var sender = await _userRepository.GetUserAsync(userName);
-            var recipient = await _userRepository.GetUserAsync(messageDto.RecipientUsername);
+            var sender = await _unitOfWork.UserRepository.GetUserAsync(userName);
+            var recipient = await _unitOfWork.UserRepository.GetUserAsync(messageDto.RecipientUsername);
 
             if (recipient is null) return NotFoundResponse("Không tìm thấy người nhận");
 
@@ -48,9 +46,9 @@ namespace BackendAPI.Controllers
                 Content = messageDto.Content,
             };
 
-            _messageRepository.AddMessage(message);
+            _unitOfWork.MessageRepository.AddMessage(message);
 
-            if (await _messageRepository.SaveAllAsync()) return OkResponse(_mapper.Map<MessageDto>(message));
+            if (await _unitOfWork.Complete()) return OkResponse(_mapper.Map<MessageDto>(message));
 
             return BadRequestResponse("Có lỗi khi gửi tin nhắn");
         }
@@ -59,7 +57,7 @@ namespace BackendAPI.Controllers
         public async Task<ActionResult> GetMessageForUser([FromQuery] MessageParams @params)
         {
             @params.Username = User.GetUserName();
-            var messages = await _messageRepository.GetMessageForUser(@params);
+            var messages = await _unitOfWork.MessageRepository.GetMessageForUser(@params);
             
             Response.AddPaginationHeader(messages.CurrentPage, messages.PageSize, messages.TotalCount, messages.TotalPages);
             return OkResponse(messages);
@@ -69,14 +67,14 @@ namespace BackendAPI.Controllers
         public async Task<ActionResult> GetMessageThread(string username)
         {
             var currentUserName = User.GetUserName();
-            return OkResponse(await _messageRepository.GetMessageThread(currentUserName, username));
+            return OkResponse(await _unitOfWork.MessageRepository.GetMessageThread(currentUserName, username));
         }
 
         [HttpDelete("{guid}")]
         public async Task<ActionResult> DeleteMessage(Guid guid)
         {
             var userName = User.GetUserName();
-            var message = await _messageRepository.GetMessage(guid);
+            var message = await _unitOfWork.MessageRepository.GetMessage(guid);
             if (message.SenderUser.UserName != userName && message.RecipientUser.UserName != userName)
             {
                 //Nếu người gửi ko phải là ana và người nhận cũng phải là ana
@@ -95,10 +93,10 @@ namespace BackendAPI.Controllers
 
             if (message.SenderDeleted && message.RecipientDeleted)
             {
-                _messageRepository.DeleteMessage(message);
+                _unitOfWork.MessageRepository.DeleteMessage(message);
             }
 
-            if (await _messageRepository.SaveAllAsync())
+            if (await _unitOfWork.Complete())
             {
                 return OkResponse("Đã xoá tin nhắn");
             }

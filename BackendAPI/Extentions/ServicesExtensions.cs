@@ -26,6 +26,7 @@ namespace BackendAPI.Extentions
             services.AddScoped<ILikeRepository, LikeRepository>();
             services.AddScoped<IMessageRepository, MessageRepository>();
             services.AddScoped<LogUserActivity>();
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
             return services;
         }
     }

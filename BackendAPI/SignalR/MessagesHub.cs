@@ -38,7 +38,7 @@ namespace BackendAPI.SignalR
 
             var groupName = GetGroupName(Context.User.GetUserName(), otherUser); // Cách để vị trí của 2 người chat không bao giờ bị thay đổi
 
-            await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
+            await Groups.AddToGroupAsync(Context.ConnectionId, groupName); // Tạo group 2 người
 
             await AddToGroup(Context, groupName);
 
